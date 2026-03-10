@@ -1,6 +1,24 @@
 # CMIS3234 Shader Programming Tutorial Requirements
 # Python 3.10+ required
 
+# Installation Instructions:
+# 1. Create virtual environment:
+#    python -m venv shader_tutorial_venv
+#
+# 2. Activate virtual environment:
+#    Windows PowerShell: .\shader_tutorial_venv\Scripts\Activate.ps1
+#    Windows CMD:        .\shader_tutorial_venv\Scripts\activate.bat
+#    Linux/Mac:          source shader_tutorial_venv/bin/activate
+#
+# 3. Install requirements:
+#    pip install -r requirements.txt
+#
+# 4. Run tutorials:
+#    cd tutorials
+#    python 01_shader_intro.py
+#    python 02_shader_colors.py
+#    python 03_shader_fog.py
+
 # Core dependencies
 numpy>=2.4.0
 pygame>=2.6.0
