@@ -1,4 +1,4 @@
-# Tutorial 01: Shader Introduction - Teaching Guide
+# Tutorial 01: Shader Introduction 
 
 ## Overview
 
