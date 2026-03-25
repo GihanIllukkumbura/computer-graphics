@@ -24,6 +24,7 @@ numpy>=2.4.0
 pygame>=2.6.0
 PyOpenGL>=3.1.7
 PyOpenGL-accelerate>=3.1.7
+OpenGLContext>=2.2.0
 
 # Optional but recommended
 PyGLM>=2.7.0

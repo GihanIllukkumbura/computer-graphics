@@ -1,14 +1,5 @@
 #! /usr/bin/env python
-"""
-Introduction to Shaders: Varying Values (Colours)
 
-This tutorial builds on the previous tutorial by:
-- Using varying values to communicate between vertex and fragment shaders
-- Catching compilation errors in your shaders
-- Packing both vertex and colour values into a single VBO
-- Enabling vertex arrays with strides
-- Enabling color arrays (legacy approach)
-"""
 
 import sys
 import numpy as np
@@ -76,7 +67,7 @@ class TestContext:
         fragment = shaders.compileShader("""
             varying vec4 vertex_color;
             void main() {
-                gl_FragColor = vertex_color;
+                gl_FragColor = vertex_color ;
             }""", GL_FRAGMENT_SHADER)
         
         # Compile the complete shader program
@@ -88,13 +79,13 @@ class TestContext:
         self.vbo = vbo.VBO(
             np.array( [
                 # Triangle 1: blends from green to yellow to cyan
-                [  0, 1, 0,  0,1,0 ],  # Green
+                [  1, 1, 0,  1,1,0 ],  # Green
                 [ -1,-1, 0,  1,1,0 ],  # Yellow
                 [  1,-1, 0,  0,1,1 ],  # Cyan
                 # Triangle 2 & 3: various colors blending
                 [  2,-1, 0,  1,0,0 ],  # Red
-                [  4,-1, 0,  0,1,0 ],  # Green
-                [  4, 1, 0,  0,0,1 ],  # Blue
+                [  3,-1, 0,  0,1,0 ],  # Green
+                [  2, 1, 0,  0,0,1 ],  # Blue
                 [  2,-1, 0,  1,0,0 ],  # Red
                 [  4, 1, 0,  0,0,1 ],  # Blue
                 [  2, 1, 0,  0,1,1 ],  # Cyan
