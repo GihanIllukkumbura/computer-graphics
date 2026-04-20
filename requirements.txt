@@ -29,3 +29,5 @@ OpenGLContext>=2.2.0
 # Optional but recommended
 PyGLM>=2.7.0
 Pillow>=12.0.0
+python-docx>=1.2.0
+matplotlib>=3.10.0

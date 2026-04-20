@@ -1,4 +1,4 @@
-# DDA Line Drawing Algorithm - Detailed Note (Easy Version)
+# DDA Line Drawing Algorithm
 
 ## 1. What Is DDA?
 

@@ -1,6 +1,6 @@
 """
-Tutorial 02: Bresenham's Line Algorithm
-========================================
+Tutorial: Bresenham Line Drawing Algorithm
+==========================================
 Based on: Bresenhams.java
 
 Demonstrates Bresenham's line-drawing algorithm — an efficient method
@@ -13,9 +13,11 @@ This implementation handles ALL 8 octants (any slope, any direction).
 
 Controls:
     - Click two points to draw a line
-    - R = Reset
-    - D = Toggle step-by-step debug mode
+    - I = Toggle typed-input mode
+    - Enter = Draw using typed points
+    - D = Toggle debug mode
     - SPACE = Next step (in debug mode)
+    - C = Clear all drawn lines
     - ESC = Quit
 """
 
@@ -27,13 +29,16 @@ import sys
 # ============================================================
 WINDOW_WIDTH = 1000
 WINDOW_HEIGHT = 700
-PIXEL_SIZE = 1           # Set to >1 for "zoomed" pixel view
+PIXEL_SIZE = 2
 BG_COLOR = (255, 255, 255)
-LINE_COLOR = (0, 0, 200)
-POINT_COLOR = (255, 0, 0)
-GRID_COLOR = (230, 230, 230)
+GRID_COLOR = (238, 238, 238)
+AXIS_COLOR = (205, 205, 205)
 TEXT_COLOR = (0, 0, 0)
-HIGHLIGHT_COLOR = (255, 200, 0)
+LINE_COLOR = (0, 90, 200)
+POINT_COLOR = (220, 30, 30)
+EXAMPLE_COLOR = (0, 140, 80)
+HIGHLIGHT_COLOR = (255, 180, 0)
+DEBUG_TEXT_COLOR = (20, 20, 20)
 
 
 def screen_to_cartesian(sx, sy):
@@ -58,12 +63,23 @@ def plot_pixel(surface, x, y, color=LINE_COLOR, size=PIXEL_SIZE):
                          (int(sx) - size // 2, int(sy) - size // 2, size, size))
 
 
-def draw_axes(surface):
-    """Draw X and Y axes crossing at origin (0,0)."""
+def draw_grid(surface, spacing=50):
+    """Draw a light background grid."""
     w, h = surface.get_size()
     cx, cy = w // 2, h // 2
-    pygame.draw.line(surface, GRID_COLOR, (0, cy), (w, cy), 1)
-    pygame.draw.line(surface, GRID_COLOR, (cx, 0), (cx, h), 1)
+
+    for x in range(cx % spacing, w, spacing):
+        pygame.draw.line(surface, GRID_COLOR, (x, 0), (x, h), 1)
+    for y in range(cy % spacing, h, spacing):
+        pygame.draw.line(surface, GRID_COLOR, (0, y), (w, y), 1)
+
+
+def draw_axes(surface):
+    """Draw x and y axes crossing at origin."""
+    w, h = surface.get_size()
+    cx, cy = w // 2, h // 2
+    pygame.draw.line(surface, AXIS_COLOR, (0, cy), (w, cy), 1)
+    pygame.draw.line(surface, AXIS_COLOR, (cx, 0), (cx, h), 1)
 
 
 def draw_point_label(surface, font, x, y, color=TEXT_COLOR):
@@ -105,7 +121,7 @@ def bresenham_line(x1, y1, x2, y2):
 
     if dx >= dy:
         # Gentle slope (|slope| <= 1): step in x
-        # This matches the original Java code's logic
+        
         p = 2 * dy - dx
         for k in range(dx):
             if p < 0:
@@ -135,69 +151,128 @@ def bresenham_line(x1, y1, x2, y2):
 
 def bresenham_line_with_trace(x1, y1, x2, y2):
     """
-    Same as bresenham_line but also returns trace info for each step:
-    [(x, y, p_value, decision), ...]
-
-    Useful for teaching — students can see the decision parameter evolve.
+    Same as bresenham_line but also returns trace info for each step and metadata.
+    
+    Returns:
+        trace: list of per-step dictionaries
+        meta:  dictionary with dx, dy, steps, initial_p
     """
-    trace = []
     dx = abs(x2 - x1)
     dy = abs(y2 - y1)
     sx = 1 if x1 < x2 else -1
     sy = 1 if y1 < y2 else -1
 
     x, y = x1, y1
+    trace = []
     
     if dx >= dy:
         p = 2 * dy - dx
-        trace.append((x, y, p, "start"))
-        for k in range(dx):
+        initial_p = p
+        trace.append({
+            "step": 0,
+            "x": x,
+            "y": y,
+            "p": p,
+            "decision": "start"
+        })
+        for step in range(1, dx + 1):
             old_p = p
             if p < 0:
                 x += sx
                 p = p + (2 * dy)
-                trace.append((x, y, p, f"p={old_p}<0 → move x only"))
+                decision = f"p={old_p}<0 → move x only"
             else:
                 x += sx
                 y += sy
                 p = p + (2 * (dy - dx))
-                trace.append((x, y, p, f"p={old_p}>=0 → move x AND y"))
+                decision = f"p={old_p}>=0 → move x AND y"
+            trace.append({
+                "step": step,
+                "x": x,
+                "y": y,
+                "p": p,
+                "decision": decision
+            })
+        meta = {
+            "dx": dx,
+            "dy": dy,
+            "steps": dx,
+            "initial_p": initial_p,
+            "mode": "gentle slope (dx >= dy)"
+        }
     else:
         p = 2 * dx - dy
-        trace.append((x, y, p, "start"))
-        for k in range(dy):
+        initial_p = p
+        trace.append({
+            "step": 0,
+            "x": x,
+            "y": y,
+            "p": p,
+            "decision": "start"
+        })
+        for step in range(1, dy + 1):
             old_p = p
             if p < 0:
                 y += sy
                 p = p + (2 * dx)
-                trace.append((x, y, p, f"p={old_p}<0 → move y only"))
+                decision = f"p={old_p}<0 → move y only"
             else:
                 y += sy
                 x += sx
                 p = p + (2 * (dx - dy))
-                trace.append((x, y, p, f"p={old_p}>=0 → move x AND y"))
+                decision = f"p={old_p}>=0 → move x AND y"
+            trace.append({
+                "step": step,
+                "x": x,
+                "y": y,
+                "p": p,
+                "decision": decision
+            })
+        meta = {
+            "dx": dx,
+            "dy": dy,
+            "steps": dy,
+            "initial_p": initial_p,
+            "mode": "steep slope (dy > dx)"
+        }
 
-    return trace
+    return trace, meta
+
+
+def parse_typed_points(input_text):
+    """Parse typed coordinates and return two points as integers."""
+    cleaned = input_text.replace(",", " ").strip()
+    parts = [p for p in cleaned.split() if p]
+    if len(parts) != 4:
+        raise ValueError("Use format: x0 y0 x1 y1 or x0,y0 x1,y1")
+
+    x0, y0, x1, y1 = map(int, parts)
+    return (x0, y0), (x1, y1)
 
 
 def main():
     pygame.init()
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-    pygame.display.set_caption("Tutorial 02: Bresenham's Line Algorithm")
+    pygame.display.set_caption("Bresenham Line Drawing Tutorial")
     font = pygame.font.SysFont("Consolas", 15)
     clock = pygame.time.Clock()
 
-    click_points = []   # Stores clicked endpoints
-    drawn_lines = []    # List of line pixel lists
+    click_points = []
+    drawn_lines = []
     debug_mode = False
     debug_trace = []
-    debug_step = 0
+    debug_meta = None
     debug_points = None
+    debug_step = 0
+    input_mode = False
+    input_buffer = ""
+    input_error = ""
 
-    # Pre-draw an example line in Cartesian coordinates.
-    p1_example, p2_example = (100, 100), (400, 200)
+    # Example line visible at startup.
+    p1_example = (-200, -100)
+    p2_example = (220, 140)
     example_pixels = bresenham_line(p1_example[0], p1_example[1], p2_example[0], p2_example[1])
-    drawn_lines.append(("Example: (100,100)→(400,200)", example_pixels, (0, 150, 0), p1_example, p2_example))
+    drawn_lines.append(("Example", example_pixels, EXAMPLE_COLOR, p1_example, p2_example))
 
     running = True
     while running:
@@ -207,96 +282,132 @@ def main():
             elif event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_ESCAPE:
                     running = False
-                elif event.key == pygame.K_r:
+                elif event.key == pygame.K_c:
                     click_points.clear()
                     drawn_lines.clear()
                     debug_trace.clear()
-                    debug_step = 0
+                    debug_meta = None
                     debug_points = None
+                    debug_step = 0
+                    input_buffer = ""
+                    input_error = "Cleared all lines and inputs."
+                elif event.key == pygame.K_i:
+                    input_mode = not input_mode
+                    input_error = ""
+                    if input_mode:
+                        click_points.clear()
                 elif event.key == pygame.K_d:
                     debug_mode = not debug_mode
+                    input_error = "Debug mode ON" if debug_mode else "Debug mode OFF"
+                    if not debug_mode:
+                        debug_trace.clear()
+                        debug_meta = None
+                        debug_points = None
+                        debug_step = 0
+                elif input_mode:
+                    if event.key in (pygame.K_RETURN, pygame.K_KP_ENTER):
+                        try:
+                            p0, p1 = parse_typed_points(input_buffer)
+                            if debug_mode:
+                                debug_trace, debug_meta = bresenham_line_with_trace(p0[0], p0[1], p1[0], p1[1])
+                                debug_points = (p0, p1)
+                                debug_step = 0
+                                input_error = "Debug trace loaded from typed points. Press SPACE to step."
+                            else:
+                                pixels = bresenham_line(p0[0], p0[1], p1[0], p1[1])
+                                label = f"({p0[0]},{p0[1]}) -> ({p1[0]},{p1[1]})"
+                                drawn_lines.append((label, pixels, LINE_COLOR, p0, p1))
+                                input_error = "Line created from typed input."
+                        except ValueError as exc:
+                            input_error = str(exc)
+                    elif event.key == pygame.K_BACKSPACE:
+                        input_buffer = input_buffer[:-1]
+                    else:
+                        # Accept digits, minus sign, comma, and spaces for point input.
+                        if event.unicode and event.unicode in "0123456789-, ":
+                            input_buffer += event.unicode
                 elif event.key == pygame.K_SPACE and debug_mode and debug_trace:
                     debug_step = min(debug_step + 1, len(debug_trace) - 1)
-            elif event.type == pygame.MOUSEBUTTONDOWN:
+            elif event.type == pygame.MOUSEBUTTONDOWN and not input_mode:
                 mx, my = event.pos
                 click_points.append(screen_to_cartesian(mx, my))
+
                 if len(click_points) == 2:
-                    p1, p2 = click_points
+                    p0, p1 = click_points
                     if debug_mode:
-                        debug_trace = bresenham_line_with_trace(
-                            p1[0], p1[1], p2[0], p2[1])
+                        debug_trace, debug_meta = bresenham_line_with_trace(p0[0], p0[1], p1[0], p1[1])
+                        debug_points = (p0, p1)
                         debug_step = 0
-                        debug_points = (p1, p2)
                     else:
-                        pixels = bresenham_line(
-                            p1[0], p1[1], p2[0], p2[1])
-                        label = f"({p1[0]},{p1[1]})→({p2[0]},{p2[1]})"
-                        drawn_lines.append((label, pixels, LINE_COLOR, p1, p2))
+                        pixels = bresenham_line(p0[0], p0[1], p1[0], p1[1])
+                        label = f"({p0[0]},{p0[1]}) -> ({p1[0]},{p1[1]})"
+                        drawn_lines.append((label, pixels, LINE_COLOR, p0, p1))
                     click_points.clear()
 
-        # --- Drawing ---
         screen.fill(BG_COLOR)
+        draw_grid(screen)
         draw_axes(screen)
 
-        # Draw all completed lines
-        for label, pixels, color, p1, p2 in drawn_lines:
+        for _, pixels, color, p0, p1 in drawn_lines:
             for px, py in pixels:
                 plot_pixel(screen, px, py, color)
-            draw_point_label(screen, font, p1[0], p1[1], (120, 0, 0))
-            draw_point_label(screen, font, p2[0], p2[1], (120, 0, 0))
+            plot_pixel(screen, p0[0], p0[1], POINT_COLOR, 7)
+            plot_pixel(screen, p1[0], p1[1], POINT_COLOR, 7)
+            draw_point_label(screen, font, p0[0], p0[1], POINT_COLOR)
+            draw_point_label(screen, font, p1[0], p1[1], POINT_COLOR)
 
-        # Draw debug trace (step-by-step)
         if debug_mode and debug_trace:
-            for i in range(min(debug_step + 1, len(debug_trace))):
-                tx, ty, tp, tdesc = debug_trace[i]
+            for i in range(debug_step + 1):
+                step_info = debug_trace[i]
                 c = HIGHLIGHT_COLOR if i == debug_step else LINE_COLOR
-                plot_pixel(screen, tx, ty, c, max(PIXEL_SIZE, 5))
+                s = 8 if i == debug_step else max(PIXEL_SIZE, 4)
+                plot_pixel(screen, step_info["x"], step_info["y"], c, s)
 
-            # Keep endpoints visible and labeled while stepping through debug trace.
             if debug_points is not None:
-                p1, p2 = debug_points
+                p0, p1 = debug_points
+                plot_pixel(screen, p0[0], p0[1], POINT_COLOR, 7)
                 plot_pixel(screen, p1[0], p1[1], POINT_COLOR, 7)
-                plot_pixel(screen, p2[0], p2[1], POINT_COLOR, 7)
+                draw_point_label(screen, font, p0[0], p0[1], POINT_COLOR)
                 draw_point_label(screen, font, p1[0], p1[1], POINT_COLOR)
-                draw_point_label(screen, font, p2[0], p2[1], POINT_COLOR)
 
-            # Show trace info
-            if debug_step < len(debug_trace):
-                info = debug_trace[debug_step]
-                info_text = font.render(
-                    f"Step {debug_step}: ({info[0]},{info[1]})  p={info[2]}  {info[3]}",
-                    True, TEXT_COLOR)
-                screen.blit(info_text, (10, WINDOW_HEIGHT - 60))
-                progress = font.render(
-                    f"SPACE=next step | Step {debug_step+1}/{len(debug_trace)}",
-                    True, (150, 0, 0))
-                screen.blit(progress, (10, WINDOW_HEIGHT - 35))
+        hud1 = font.render("Bresenham Line: Click 2 points | I=Input Mode | D=Debug | SPACE=Next | C=Clear | ESC=Quit", True, TEXT_COLOR)
+        hud2 = font.render(f"Stored lines: {len(drawn_lines)}", True, TEXT_COLOR)
+        screen.blit(hud1, (10, 10))
+        screen.blit(hud2, (10, 32))
 
-            if debug_points is not None:
-                p1, p2 = debug_points
-                debug_points_text = font.render(
-                    f"Debug endpoints: P1({p1[0]}, {p1[1]}), P2({p2[0]}, {p2[1]})",
-                    True, TEXT_COLOR)
-                screen.blit(debug_points_text, (10, WINDOW_HEIGHT - 85))
+        mode_text = "Mode: DEBUG" if debug_mode else "Mode: NORMAL"
+        input_text = "Input: TYPED" if input_mode else "Input: MOUSE"
+        hud3 = font.render(f"{mode_text} | {input_text}", True, DEBUG_TEXT_COLOR)
+        screen.blit(hud3, (10, 54))
 
-        # Draw click markers
-        for cp in click_points:
-            plot_pixel(screen, cp[0], cp[1], POINT_COLOR, 7)
-            draw_point_label(screen, font, cp[0], cp[1], POINT_COLOR)
-
-        # HUD
-        mode_str = "[DEBUG MODE] " if debug_mode else ""
-        title = font.render(
-            f"{mode_str}Bresenham's Line — Click 2 points | R=Reset | D=Debug | ESC=Quit",
-            True, TEXT_COLOR)
-        screen.blit(title, (10, 10))
+        if debug_mode and debug_trace and debug_meta is not None:
+            current = debug_trace[debug_step]
+            debug_line_1 = (
+                f"dx={debug_meta['dx']}  dy={debug_meta['dy']}  steps={debug_meta['steps']}  "
+                f"mode={debug_meta['mode']}"
+            )
+            debug_line_2 = (
+                f"Step {current['step']}/{debug_meta['steps']}: "
+                f"plot({current['x']}, {current['y']})  p={current['p']}"
+            )
+            debug_line_3 = f"Decision: {current['decision']}"
+            screen.blit(font.render(debug_line_1, True, DEBUG_TEXT_COLOR), (10, 76))
+            screen.blit(font.render(debug_line_2, True, DEBUG_TEXT_COLOR), (10, 98))
+            screen.blit(font.render(debug_line_3, True, DEBUG_TEXT_COLOR), (10, 120))
 
         if len(click_points) == 1:
-            hint = font.render("Click second point...", True, POINT_COLOR)
-            screen.blit(hint, (10, 32))
+            p = click_points[0]
+            msg = font.render(f"First point selected: ({p[0]}, {p[1]})", True, TEXT_COLOR)
+            screen.blit(msg, (10, 142 if debug_mode and debug_trace else 76))
 
-        origin_text = font.render("Origin: (0, 0)", True, TEXT_COLOR)
-        screen.blit(origin_text, (10, 54))
+        if input_mode:
+            input_line = f"Typed points: {input_buffer}"
+            input_hint = "Enter format: x0 y0 x1 y1   or   x0,y0 x1,y1 | Press Enter to draw"
+            screen.blit(font.render(input_hint, True, DEBUG_TEXT_COLOR), (10, WINDOW_HEIGHT - 58))
+            screen.blit(font.render(input_line, True, DEBUG_TEXT_COLOR), (10, WINDOW_HEIGHT - 36))
+            if input_error:
+                status_color = (160, 0, 0) if "format" in input_error.lower() else (0, 120, 0)
+                screen.blit(font.render(input_error, True, status_color), (10, WINDOW_HEIGHT - 16))
 
         pygame.display.flip()
         clock.tick(60)
