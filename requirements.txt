@@ -1,5 +1,5 @@
 # CMIS3234 Shader Programming Tutorial Requirements
-# Python 3.10+ required
+# Recommended Python version: 3.12+
 
 # Installation Instructions:
 # 1. Create virtual environment:
@@ -19,15 +19,20 @@
 #    python 02_shader_colors.py
 #    python 03_shader_fog.py
 
-# Core dependencies
-numpy>=2.4.0
-pygame>=2.6.0
-PyOpenGL>=3.1.7
-PyOpenGL-accelerate>=3.1.7
-OpenGLContext>=2.2.0
+## Core dependencies (pinned to tested workspace versions)
+numpy==2.4.3
+pygame==2.6.1
+PyOpenGL==3.1.7
+PyOpenGL-accelerate==3.1.10
 
-# Optional but recommended
-PyGLM>=2.7.0
-Pillow>=12.0.0
-python-docx>=1.2.0
-matplotlib>=3.10.0
+## Optional / Documentation / Visualization
+pyglm==2.8.3
+Pillow==12.1.1
+python-docx==1.2.0
+matplotlib==3.10.0
+
+## Notes
+# These versions reflect the packages installed in the repository virtual
+# environment (shader_tutorial_venv). Pinning improves reproducibility for
+# generating graphs and DOCX files. If you need newer versions, update and
+# re-run `pip install -r requirements.txt` in a fresh virtualenv.
